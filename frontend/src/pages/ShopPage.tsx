@@ -4,9 +4,11 @@ import Layout from '../components/layout/Layout';
 import { useTranslation } from '../hooks/useTranslation';
 import ProductCard from '../components/ui/ProductCard';
 import WavyDivider from '../components/ui/WavyDivider';
-import { Filter, ChevronDown, LayoutGrid, List, Search, Loader2 } from 'lucide-react';
+import FlashSaleCountdown from '../components/ui/FlashSaleCountdown';
+import { Filter, ChevronDown, LayoutGrid, List, Search, Loader2, Camera, X } from 'lucide-react';
 import { productService } from '../services/productService';
 import { categoryService } from '../services/categoryService';
+import toast from 'react-hot-toast';
 
 const ShopPage: React.FC = () => {
   const { t, lang, formatPrice } = useTranslation();
@@ -14,6 +16,8 @@ const ShopPage: React.FC = () => {
   const departmentParam = searchParams.get('department');
   
   const [searchQuery, setSearchQuery] = useState('');
+  const [visualSearchModalOpen, setVisualSearchModalOpen] = useState(false);
+  const [visualSearchLoading, setVisualSearchLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState({ id: departmentParam || 'All', nameAr: 'الكل', nameEn: 'All' });
   const [categories, setCategories] = useState<{ id: string, nameAr: string, nameEn: string }[]>([]);
   const [maxPrice, setMaxPrice] = useState(100000);
@@ -97,6 +101,49 @@ const ShopPage: React.FC = () => {
   const totalPages = Math.ceil(totalProducts / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
 
+  const handleVisualSearch = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image is too large. Max 5MB');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      setVisualSearchModalOpen(false);
+      setLoading(true);
+      setVisualSearchLoading(true);
+      try {
+        const res = await fetch(`${(import.meta as any).env.VITE_API_URL || 'http://localhost:3005'}/ai/visual-search`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify({ image: reader.result })
+        });
+        const data = await res.json();
+        
+        if (data.keywords && data.keywords.length > 0) {
+          setSearchQuery(data.keywords[0]);
+          setCurrentPage(1);
+          toast.success(lang === 'ar' ? `تم البحث عن: ${data.keywords[0]}` : `Searching for: ${data.keywords[0]}`);
+        } else {
+          toast.error(lang === 'ar' ? 'لم يتم التعرف على المنتج' : 'Product not recognized');
+        }
+      } catch (err) {
+        console.error('Visual search failed', err);
+        toast.error('Visual search failed');
+      } finally {
+        setVisualSearchLoading(false);
+        setLoading(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const getHeroImage = () => {
     const catName = selectedCategory.nameEn;
     switch(catName) {
@@ -136,16 +183,31 @@ const ShopPage: React.FC = () => {
           </p>
           
           <div className="flex items-center gap-4">
-            <div className="relative flex-1 md:w-80">
+            <div className="relative flex-1 md:w-96 flex items-center">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted h-4 w-4" />
               <input 
                 type="text" 
                 placeholder={t('common.search')} 
                 value={searchQuery}
                 onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-                className="w-full px-12 py-3 bg-white border border-slate-200 rounded-2xl outline-none focus:border-primary transition-all shadow-sm"
+                className="w-full pl-12 pr-12 py-3 bg-white border border-slate-200 rounded-2xl outline-none focus:border-primary transition-all shadow-sm"
               />
-              {loading && <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-primary animate-spin" />}
+              {loading && !visualSearchLoading && <Loader2 className="absolute right-12 top-1/2 -translate-y-1/2 h-4 w-4 text-primary animate-spin" />}
+              
+              <button 
+                onClick={() => document.getElementById('visual-search-input')?.click()}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-primary hover:text-primary/80 transition-colors p-1.5 bg-primary/10 rounded-lg"
+                title={lang === 'ar' ? 'البحث بالصور' : 'Visual Search'}
+              >
+                {visualSearchLoading ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
+              </button>
+              <input 
+                type="file" 
+                id="visual-search-input" 
+                accept="image/*" 
+                className="hidden" 
+                onChange={handleVisualSearch}
+              />
             </div>
           </div>
         </div>
@@ -231,25 +293,34 @@ const ShopPage: React.FC = () => {
                 <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Loading Arsenal...</p>
               </div>
             ) : (
-              <div className="grid gap-10 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {products.map((p) => (
-                  <ProductCard key={p.id} product={{
-                    id: p.id,
-                    name: lang === 'ar' ? p.nameAr : p.nameEn,
-                    price: Number(p.basePrice || p.price),
-                    image: p.images?.[0]?.imageUrl || p.image || 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?q=80&w=400',
-                    rating: Number(p.rating ?? 5.0),
-                    category: lang === 'ar' ? (p.vendorCategory?.nameAr || p.department?.nameAr || 'قسم') : (p.vendorCategory?.nameEn || p.department?.nameEn || 'Category'),
-                    slug: p.slug || p.id,
-                    discount: p.discount
-                  }} />
-                ))}
-                {products.length === 0 && !loading && (
-                  <div className="col-span-full py-20 text-center">
-                    <Search size={48} className="mx-auto text-slate-200 mb-6" />
-                    <p className="text-text-muted font-medium uppercase tracking-widest">{lang === 'ar' ? 'لا توجد منتجات مطابقة' : 'No products found'}</p>
-                  </div>
+              <div className="space-y-8">
+                {/* ⚡ Flash Sale Banner */}
+                {currentPage === 1 && products.length > 0 && (
+                  <FlashSaleCountdown 
+                    endTime={new Date(new Date().getTime() + 1000 * 60 * 60 * 5 + 1000 * 60 * 23)} // 5 hours 23 mins from now
+                  />
                 )}
+                
+                <div className="grid gap-10 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {products.map((p) => (
+                    <ProductCard key={p.id} product={{
+                      id: p.id,
+                      name: lang === 'ar' ? p.nameAr : p.nameEn,
+                      price: Number(p.basePrice || p.price),
+                      image: p.images?.[0]?.imageUrl || p.image || 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?q=80&w=400',
+                      rating: Number(p.rating ?? 5.0),
+                      category: lang === 'ar' ? (p.vendorCategory?.nameAr || p.department?.nameAr || 'قسم') : (p.vendorCategory?.nameEn || p.department?.nameEn || 'Category'),
+                      slug: p.slug || p.id,
+                      discount: p.discount || (currentPage === 1 ? 15 : undefined) // Mock discount for flash sale
+                    }} />
+                  ))}
+                  {products.length === 0 && !loading && (
+                    <div className="col-span-full py-20 text-center">
+                      <Search size={48} className="mx-auto text-slate-200 mb-6" />
+                      <p className="text-text-muted font-medium uppercase tracking-widest">{lang === 'ar' ? 'لا توجد منتجات مطابقة' : 'No products found'}</p>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 

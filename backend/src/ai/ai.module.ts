@@ -8,10 +8,12 @@ import { SmartSearchService } from './smart-search/smart-search.service';
 import { FakeReviewsService } from './fake-reviews/fake-reviews.service';
 import { NegotiationService } from './negotiation/negotiation.service';
 import { BackgroundRemoverService } from './background-remover/background-remover.service';
+import { ReviewSummarizerService } from './review-summarizer/review-summarizer.service';
 import { AiController } from './ai.controller';
+import { ProductsModule } from '../products/products.module';
 
 @Module({
-  imports: [ConfigModule],
+  imports: [ConfigModule, ProductsModule],
   controllers: [AiController],
   providers: [
     ProductDescService,
@@ -22,6 +24,7 @@ import { AiController } from './ai.controller';
     FakeReviewsService,
     NegotiationService,
     BackgroundRemoverService,
+    ReviewSummarizerService,
   ],
   exports: [
     ProductDescService,

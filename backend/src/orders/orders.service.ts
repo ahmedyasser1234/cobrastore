@@ -8,6 +8,7 @@ import { OrderStatusLog } from '../entities/order-status-log.entity';
 import { CartService } from '../cart/cart.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../entities/notification.entity';
+import { LoyaltyService } from '../loyalty/loyalty.service';
 
 @Injectable()
 export class OrderService {
@@ -16,13 +17,13 @@ export class OrderService {
     private orderRepository: Repository<Order>,
     @InjectRepository(OrderItem)
     private orderItemRepository: Repository<OrderItem>,
-    @InjectRepository(OrderStatusLog)
     private statusLogRepository: Repository<OrderStatusLog>,
     private cartService: CartService,
     private notificationsService: NotificationsService,
+    private loyaltyService: LoyaltyService,
   ) {}
 
-  async createFromCart(userId: string, sessionId: string, shippingAddress: any): Promise<Order> {
+  async createFromCart(userId: string, sessionId: string, shippingAddress: any, pointsToRedeem: number = 0): Promise<Order> {
     const cart = await this.cartService.findOrCreateCart(sessionId, userId);
     
     if (cart.items.length === 0) {
@@ -71,7 +72,14 @@ export class OrderService {
     });
 
     await this.orderItemRepository.save(orderItems);
-    savedOrder.total = total;
+
+    let pointsDiscount = 0;
+    if (pointsToRedeem > 0) {
+      const redemption = await this.loyaltyService.redeemPoints(userId, pointsToRedeem);
+      pointsDiscount = redemption.discountAmount;
+    }
+
+    savedOrder.total = Math.max(0, total - pointsDiscount);
     const finalOrder = await this.orderRepository.save(savedOrder);
 
     // Notify vendors
@@ -119,6 +127,10 @@ export class OrderService {
       note
     });
     await this.statusLogRepository.save(log);
+
+    if (toStatus === OrderStatus.PAID) {
+      await this.loyaltyService.awardPoints(order.userId, order.id, order.total);
+    }
 
     // Notify the user about the status update
     await this.notificationsService.createNotification({

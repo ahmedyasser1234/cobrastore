@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { ShoppingCart, Star, Heart, Eye, X } from 'lucide-react';
+import { ShoppingCart, Star, Heart, Eye, X, Scale } from 'lucide-react';
 import { useTranslation } from '../../hooks/useTranslation';
 import Button from './Button';
 import { Link } from 'react-router-dom';
 import { useCartStore } from '../../store/useCartStore';
 import { useWishlistStore } from '../../store/useWishlistStore';
+import { useCompareStore } from '../../store/useCompareStore';
+import toast from 'react-hot-toast';
 
 interface ProductCardProps {
   product: {
@@ -73,8 +75,29 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           <button 
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowQuickView(true); }}
             className="p-3 bg-white/80 backdrop-blur-xl border border-white/20 rounded-2xl text-text-main hover:text-primary transition-colors shadow-xl"
+            title={lang === 'ar' ? 'نظرة سريعة' : 'Quick View'}
           >
             <Eye size={20} />
+          </button>
+          <button 
+            onClick={(e) => { 
+              e.preventDefault(); 
+              e.stopPropagation(); 
+              useCompareStore.getState().addItem({
+                id: product.id,
+                nameEn: product.name,
+                nameAr: product.name,
+                price: product.price,
+                image: product.image,
+                category: product.category,
+                rating: product.rating || 0
+              });
+              toast.success(lang === 'ar' ? 'تمت الإضافة للمقارنة' : 'Added to compare');
+            }}
+            className="p-3 bg-white/80 backdrop-blur-xl border border-white/20 rounded-2xl text-text-main hover:text-primary transition-colors shadow-xl"
+            title={lang === 'ar' ? 'مقارنة' : 'Compare'}
+          >
+            <Scale size={20} />
           </button>
         </div>
 

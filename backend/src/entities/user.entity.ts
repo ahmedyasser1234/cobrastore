@@ -54,6 +54,15 @@ export class User {
   @Column({ type: 'int', default: 0 })
   points: number;
 
+  @Column({ type: 'enum', enum: ['bronze', 'silver', 'gold', 'platinum'], default: 'bronze' })
+  tier: string;
+
+  @Column({ unique: true, nullable: true })
+  referralCode: string;
+
+  @Column({ nullable: true })
+  referredBy: string;
+
   @CreateDateColumn()
   createdAt: Date;
 

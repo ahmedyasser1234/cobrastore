@@ -41,4 +41,40 @@ export class SmartSearchService {
       return null;
     }
   }
+
+  async visualSearch(imageBase64: string, mediaType: string): Promise<string[]> {
+    try {
+      const res = await this.client.messages.create({
+        model: 'claude-3-5-sonnet-20241022',
+        max_tokens: 150,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'image',
+                source: {
+                  type: 'base64',
+                  media_type: mediaType as any,
+                  data: imageBase64,
+                },
+              },
+              {
+                type: 'text',
+                text: 'Extract the main product type and key visual features from this image. Return ONLY a comma-separated list of 3-5 keywords in English (e.g., "sneakers, red, running shoes"). Do not include any other text.',
+              }
+            ],
+          }
+        ],
+      });
+
+      const content = res.content[0];
+      if (content.type !== 'text') throw new Error('Unexpected response type');
+      
+      return content.text.split(',').map(k => k.trim().toLowerCase());
+    } catch (error) {
+      this.logger.error(`Visual Search failed: ${error.message}`);
+      return [];
+    }
+  }
 }

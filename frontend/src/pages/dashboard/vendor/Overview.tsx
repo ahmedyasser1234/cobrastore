@@ -127,10 +127,32 @@ const VendorOverview: React.FC = () => {
             </span>
           </p>
         </div>
-        <Button onClick={() => navigate('/dashboard/vendor/products')} className="h-12 px-6 text-xs uppercase font-black tracking-widest">
-          <Plus size={16} />
-          {lang === 'ar' ? 'إضافة منتج جديد' : 'Add New Product'}
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button 
+            onClick={() => {
+              const headers = ['Order ID', 'Date', 'Status', 'Total (EGP)'];
+              const rows = orders.map(o => {
+                const subtotal = (o.items?.filter((i: any) => i.vendorId === profile?.id) || []).reduce((sum: number, item: any) => sum + (Number(item.unitPrice) * item.quantity), 0);
+                return `${o.id.substring(0,8)},${new Date(o.createdAt).toLocaleDateString()},${o.status},${subtotal}`;
+              });
+              const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows].join('\n');
+              const encodedUri = encodeURI(csvContent);
+              const link = document.createElement("a");
+              link.setAttribute("href", encodedUri);
+              link.setAttribute("download", `store_report_${new Date().toISOString().split('T')[0]}.csv`);
+              document.body.appendChild(link);
+              link.click();
+              link.remove();
+            }} 
+            className="h-12 px-6 text-xs uppercase font-black tracking-widest bg-slate-800 hover:bg-slate-700"
+          >
+            {lang === 'ar' ? 'تصدير تقرير CSV' : 'Export CSV Report'}
+          </Button>
+          <Button onClick={() => navigate('/dashboard/vendor/products')} className="h-12 px-6 text-xs uppercase font-black tracking-widest">
+            <Plus size={16} />
+            {lang === 'ar' ? 'إضافة منتج' : 'Add Product'}
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}

@@ -4,9 +4,13 @@ import { Repository, Between, ILike, Not } from 'typeorm';
 import { Product, ProductStatus } from '../entities/product.entity';
 import { ProductVariation } from '../entities/product-variation.entity';
 import { ProductImage } from '../entities/product-image.entity';
+import { ConfigService } from '@nestjs/config';
+import Anthropic from '@anthropic-ai/sdk';
 
 @Injectable()
 export class ProductsService {
+  private readonly client: Anthropic;
+
   constructor(
     @InjectRepository(Product)
     private productsRepository: Repository<Product>,
@@ -14,7 +18,10 @@ export class ProductsService {
     private variationRepository: Repository<ProductVariation>,
     @InjectRepository(ProductImage)
     private imageRepository: Repository<ProductImage>,
-  ) {}
+    private configService: ConfigService,
+  ) {
+    this.client = new Anthropic({ apiKey: this.configService.get('ANTHROPIC_API_KEY') });
+  }
 
   async findAll(query: any): Promise<any> {
     const { 
@@ -180,9 +187,52 @@ export class ProductsService {
   }
 
   async getRecommendations(id: string): Promise<Product[]> {
-    const product = await this.productsRepository.findOne({ where: { id } });
+    const product = await this.productsRepository.findOne({ 
+      where: { id },
+      relations: ['department', 'vendorCategory']
+    });
     if (!product) throw new NotFoundException('Product not found');
 
+    try {
+      const prompt = `Analyze this product:
+Name: ${product.nameEn} / ${product.nameAr}
+Description: ${product.descriptionEn}
+Category: ${product.vendorCategory?.nameEn || product.department?.nameEn || 'General'}
+
+Suggest 3 keywords for COMPLEMENTARY products (things bought together). 
+Return ONLY a comma-separated list of 3 short keywords in English.`;
+
+      const res = await this.client.messages.create({
+        model: 'claude-3-haiku-20240307',
+        max_tokens: 50,
+        messages: [{ role: 'user', content: prompt }],
+      });
+
+      const content = res.content[0];
+      if (content.type === 'text') {
+        const keywords = content.text.split(',').map(k => k.trim().toLowerCase()).filter(k => k.length > 2);
+        
+        if (keywords.length > 0) {
+          const whereConditions = keywords.map(keyword => ({
+            id: Not(product.id),
+            status: ProductStatus.APPROVED,
+            nameEn: require('typeorm').ILike(`%${keyword}%`),
+          }));
+
+          const recommendations = await this.productsRepository.find({
+            where: whereConditions,
+            take: 4,
+            relations: ['images', 'vendor', 'department'],
+          });
+
+          if (recommendations.length > 0) return recommendations;
+        }
+      }
+    } catch (e) {
+      console.warn('AI Recommendations failed, falling back to basic recommendations', e.message);
+    }
+
+    // Fallback logic
     const whereCondition: any = { 
       id: Not(product.id),
       status: ProductStatus.APPROVED,
@@ -199,7 +249,6 @@ export class ProductsService {
       order: { reviewCount: 'DESC' }
     });
 
-    // If not enough recommendations, fallback to any approved products
     if (recommendations.length < 4) {
       const more = await this.productsRepository.find({
         where: { id: Not(product.id), status: ProductStatus.APPROVED },

@@ -26,6 +26,9 @@ import { UploadModule } from './upload/upload.module';
 import { VirtualTryonModule } from './virtual-tryon/virtual-tryon.module';
 import { AiModule } from './ai/ai.module';
 import { AdsModule } from './ads/ads.module';
+import { ReviewsModule } from './reviews/reviews.module';
+import { LoyaltyModule } from './loyalty/loyalty.module';
+import { ReturnsModule } from './returns/returns.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
@@ -72,6 +75,9 @@ import { ThrottlerModule } from '@nestjs/throttler';
     VirtualTryonModule,
     AiModule,
     AdsModule,
+    ReviewsModule,
+    LoyaltyModule,
+    ReturnsModule,
   ],
   controllers: [PublicController],
 

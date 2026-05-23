@@ -5,6 +5,7 @@ import api from '../../../services/api';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { toast } from 'react-hot-toast';
 import { useDepartments, useCategories, useSubCategories, useCategoryAttributes } from '../../../hooks/api/useTaxonomy';
+import BulkImportModal from '../../../components/ui/BulkImportModal';
 
 const VendorProductsPage: React.FC = () => {
   const { t, lang } = useTranslation();
@@ -18,6 +19,7 @@ const VendorProductsPage: React.FC = () => {
   
   // For modal
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   
@@ -322,10 +324,16 @@ const VendorProductsPage: React.FC = () => {
         <h1 className="text-2xl font-black uppercase tracking-tighter text-glow-primary">
           {lang === 'ar' ? 'إدارة المنتجات' : 'Products Management'}
         </h1>
-        <Button onClick={() => handleOpenModal()} className="h-10 px-4 text-xs">
-          <Plus size={16} />
-          {lang === 'ar' ? 'إضافة منتج' : 'Add Product'}
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button onClick={() => setIsBulkImportOpen(true)} className="h-10 px-4 text-xs bg-slate-800 hover:bg-slate-700">
+            <Upload size={16} className="mr-2" />
+            {lang === 'ar' ? 'استيراد جماعي' : 'Bulk Import'}
+          </Button>
+          <Button onClick={() => handleOpenModal()} className="h-10 px-4 text-xs">
+            <Plus size={16} />
+            {lang === 'ar' ? 'إضافة منتج' : 'Add Product'}
+          </Button>
+        </div>
       </div>
 
       <div className="glass p-6 rounded-2xl">
@@ -674,6 +682,12 @@ const VendorProductsPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      <BulkImportModal 
+        isOpen={isBulkImportOpen} 
+        onClose={() => setIsBulkImportOpen(false)} 
+        onSuccess={() => fetchData()} 
+      />
     </div>
   );
 };

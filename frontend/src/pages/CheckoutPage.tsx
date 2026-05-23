@@ -4,11 +4,39 @@ import { useTranslation } from '../hooks/useTranslation';
 import Button from '../components/ui/Button';
 import { MapPin, Truck, CreditCard, CheckCircle2, ChevronRight, ShieldCheck, ShoppingCart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import api from '../services/api';
 
 const CheckoutPage: React.FC = () => {
   const { lang } = useTranslation();
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = React.useState(1);
+  const [cart, setCart] = React.useState<any>(null);
+  const [pointsBalance, setPointsBalance] = React.useState(0);
+  const [pointsToRedeem, setPointsToRedeem] = React.useState(0);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [cartRes, loyaltyRes] = await Promise.all([
+          api.get('/cart'),
+          api.get('/loyalty/balance').catch(() => ({ data: { points: 0 } }))
+        ]);
+        setCart(cartRes.data);
+        setPointsBalance(loyaltyRes.data.points || 0);
+      } catch (err) {
+        console.error('Failed to load checkout data', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const subtotal = cart?.items?.reduce((sum: number, item: any) => sum + (item.variation ? item.variation.price : item.product.basePrice) * item.quantity, 0) || 0;
+  const shipping = 50; // Mock shipping cost
+  const pointsDiscount = pointsToRedeem * 0.05; // 100 points = 5 EGP
+  const total = Math.max(0, subtotal + shipping - pointsDiscount);
 
   const steps = [
     { id: 1, name: 'Address', icon: <MapPin size={18} /> },
@@ -17,12 +45,23 @@ const CheckoutPage: React.FC = () => {
     { id: 4, name: 'Review', icon: <CheckCircle2 size={18} /> }
   ];
 
-  const nextStep = () => {
+  const nextStep = async () => {
     if (currentStep < 4) {
       setCurrentStep(currentStep + 1);
       window.scrollTo(0, 0);
     } else {
-      navigate('/checkout/success');
+      try {
+        const sessionId = localStorage.getItem('sessionId') || 'temp-session';
+        const res = await api.post('/orders', {
+          shippingAddress: { country: 'Egypt', city: 'Cairo', street: '123 St' }, // Mocked for now
+          pointsToRedeem
+        }, { headers: { 'x-session-id': sessionId } });
+
+        const paymentRes = await api.post('/payments/create-checkout-session', { orderId: res.data.id });
+        window.location.href = paymentRes.data.url;
+      } catch (err) {
+        console.error('Checkout failed', err);
+      }
     }
   };
 
@@ -208,32 +247,62 @@ const CheckoutPage: React.FC = () => {
               </div>
               
               <div className="space-y-4 mb-8">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-background border border-border rounded-xl flex-shrink-0 overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?q=80&w=100" alt="product" />
+                {cart?.items?.map((item: any) => (
+                  <div key={item.id} className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-background border border-border rounded-xl flex-shrink-0 overflow-hidden">
+                      <img src={item.product?.images?.[0]?.url || 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?q=80&w=100'} alt="product" className="w-full h-full object-cover" />
+                    </div>
+                    <div className="flex-grow">
+                      <div className="text-xs font-bold line-clamp-1">{item.product?.nameEn}</div>
+                      <div className="text-[10px] text-text-muted font-bold uppercase tracking-widest">Qty: {item.quantity}</div>
+                    </div>
+                    <div className="font-bold text-sm">{(item.variation ? item.variation.price : item.product?.basePrice * item.quantity).toLocaleString()}</div>
                   </div>
-                  <div className="flex-grow">
-                    <div className="text-xs font-bold line-clamp-1">Cobra X1 Gaming Mouse</div>
-                    <div className="text-[10px] text-text-muted font-bold uppercase tracking-widest">Qty: 1</div>
-                  </div>
-                  <div className="font-bold text-sm">$59.00</div>
-                </div>
+                ))}
               </div>
 
               <div className="space-y-4 py-6 border-y border-border/50 mb-8">
                 <div className="flex justify-between text-xs font-bold text-text-muted uppercase tracking-widest">
-                  <span>Subtotal</span>
-                  <span>$59.00</span>
+                  <span>{lang === 'ar' ? 'المجموع الفرعي' : 'Subtotal'}</span>
+                  <span>{subtotal.toLocaleString()} EGP</span>
                 </div>
                 <div className="flex justify-between text-xs font-bold text-text-muted uppercase tracking-widest">
-                  <span>Shipping</span>
-                  <span className="text-primary">+$15.00</span>
+                  <span>{lang === 'ar' ? 'الشحن' : 'Shipping'}</span>
+                  <span className="text-primary">+{shipping.toLocaleString()} EGP</span>
                 </div>
+                {pointsDiscount > 0 && (
+                  <div className="flex justify-between text-xs font-bold text-green-500 uppercase tracking-widest">
+                    <span>{lang === 'ar' ? 'خصم النقاط' : 'Points Discount'}</span>
+                    <span>-{pointsDiscount.toLocaleString()} EGP</span>
+                  </div>
+                )}
               </div>
+
+              {/* Loyalty Points Section */}
+              {pointsBalance > 0 && (
+                <div className="bg-primary/5 p-4 border border-primary/20 rounded-2xl mb-8">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-xs font-bold text-primary uppercase tracking-widest">{lang === 'ar' ? 'نقاطك المتاحة' : 'Available Points'}</span>
+                    <span className="text-sm font-black text-primary">{pointsBalance}</span>
+                  </div>
+                  <div className="flex gap-2 items-center">
+                    <input 
+                      type="number" 
+                      max={pointsBalance} 
+                      min={0}
+                      value={pointsToRedeem}
+                      onChange={(e) => setPointsToRedeem(Math.min(pointsBalance, Math.max(0, parseInt(e.target.value) || 0)))}
+                      className="w-full bg-white border border-primary/30 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:border-primary text-center"
+                      placeholder="0"
+                    />
+                    <Button onClick={() => setPointsToRedeem(pointsBalance)} size="sm" variant="outline" className="text-[10px] px-2 py-2">MAX</Button>
+                  </div>
+                </div>
+              )}
 
               <div className="flex justify-between items-center mb-10">
                 <span className="text-lg font-extrabold uppercase tracking-tighter text-text-muted">Total</span>
-                <span className="text-3xl font-extrabold text-primary tracking-tighter">$74.00</span>
+                <span className="text-3xl font-extrabold text-primary tracking-tighter">{total.toLocaleString()} EGP</span>
               </div>
 
               <div className="bg-white p-5 border border-slate-200 rounded-3xl flex items-center gap-4 shadow-sm">

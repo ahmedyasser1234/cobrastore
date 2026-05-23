@@ -3,12 +3,18 @@ import { Package, Search, Loader2 } from 'lucide-react';
 import api from '../../../services/api';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { toast } from 'react-hot-toast';
+import OrderTrackingModal from '../../../components/ui/OrderTrackingModal';
+import ReturnModal from '../../../components/ui/ReturnModal';
 
 const CustomerOrders: React.FC = () => {
   const { lang } = useTranslation();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  const [trackingModalOpen, setTrackingModalOpen] = useState(false);
+  const [returnModalOpen, setReturnModalOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
 
   useEffect(() => {
     fetchOrders();
@@ -64,6 +70,7 @@ const CustomerOrders: React.FC = () => {
                   <th className="pb-3 px-4 font-black">{lang === 'ar' ? 'التاريخ' : 'Date'}</th>
                   <th className="pb-3 px-4 font-black">{lang === 'ar' ? 'الإجمالي' : 'Total'}</th>
                   <th className="pb-3 px-4 font-black">{lang === 'ar' ? 'الحالة' : 'Status'}</th>
+                  <th className="pb-3 px-4 font-black text-center">{lang === 'ar' ? 'إجراءات' : 'Actions'}</th>
                 </tr>
               </thead>
               <tbody>
@@ -93,11 +100,29 @@ const CustomerOrders: React.FC = () => {
                         ) : order.status}
                       </span>
                     </td>
+                    <td className="py-4 px-4">
+                      <div className="flex justify-center items-center gap-2">
+                        <button 
+                          onClick={() => { setSelectedOrder(order); setTrackingModalOpen(true); }}
+                          className="bg-primary/10 text-primary hover:bg-primary/20 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors"
+                        >
+                          {lang === 'ar' ? 'تتبع' : 'Track'}
+                        </button>
+                        {order.status === 'delivered' && (
+                          <button 
+                            onClick={() => { setSelectedOrder(order); setReturnModalOpen(true); }}
+                            className="bg-red-500/10 text-red-500 hover:bg-red-500/20 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors"
+                          >
+                            {lang === 'ar' ? 'إرجاع' : 'Return'}
+                          </button>
+                        )}
+                      </div>
+                    </td>
                   </tr>
                 ))}
                 {filteredOrders.length === 0 && (
                   <tr>
-                    <td colSpan={4} className="py-8 text-center text-text-muted text-xs uppercase tracking-widest font-bold">
+                    <td colSpan={5} className="py-8 text-center text-text-muted text-xs uppercase tracking-widest font-bold">
                       {lang === 'ar' ? 'لا توجد طلبات سابقة' : 'No previous orders found'}
                     </td>
                   </tr>
@@ -107,6 +132,19 @@ const CustomerOrders: React.FC = () => {
           </div>
         )}
       </div>
+
+      <OrderTrackingModal 
+        isOpen={trackingModalOpen} 
+        orderId={selectedOrder?.id} 
+        onClose={() => setTrackingModalOpen(false)} 
+      />
+
+      <ReturnModal 
+        isOpen={returnModalOpen} 
+        order={selectedOrder} 
+        onClose={() => setReturnModalOpen(false)} 
+        onSuccess={fetchOrders}
+      />
     </div>
   );
 };

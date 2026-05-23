@@ -25,6 +25,7 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ type }) => {
     phone: '',
     password: '',
     confirmPassword: '',
+    referredBy: '',
   });
 
   const [role, setRole] = React.useState<'customer' | 'vendor'>(type || 'customer');
@@ -175,6 +176,16 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ type }) => {
               <div className="relative">
                 <LockIcon className={`absolute top-1/2 -translate-y-1/2 h-5 w-5 text-text-muted ${lang === 'ar' ? 'right-4' : 'left-4'}`} />
                 <input type="password" name="confirmPassword" onChange={handleChange} value={formData.confirmPassword} placeholder="••••••••" className={`input-field ${lang === 'ar' ? 'pr-12 pl-4 text-right' : 'pl-12 pr-4 text-left'}`} dir="ltr" required />
+              </div>
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <label className={`text-xs font-bold uppercase tracking-widest text-text-muted ${lang === 'ar' ? 'mr-1' : 'ml-1'}`}>
+                {lang === 'ar' ? 'كود الإحالة (اختياري)' : 'Referral Code (Optional)'}
+              </label>
+              <div className="relative">
+                <UserCircle className={`absolute top-1/2 -translate-y-1/2 h-5 w-5 text-text-muted ${lang === 'ar' ? 'right-4' : 'left-4'}`} />
+                <input type="text" name="referredBy" onChange={handleChange} value={formData.referredBy} placeholder="e.g. JOH1234" className={`input-field uppercase ${lang === 'ar' ? 'pr-12 pl-4 text-right' : 'pl-12 pr-4 text-left'}`} dir="ltr" />
               </div>
             </div>
 

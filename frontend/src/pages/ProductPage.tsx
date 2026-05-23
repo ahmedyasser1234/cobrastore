@@ -7,6 +7,8 @@ import toast from 'react-hot-toast';
 import Button from '../components/ui/Button';
 import VirtualTryOnModal from '../components/ui/VirtualTryOnModal';
 import Navbar from '../components/layout/Navbar';
+import ReviewSection from '../components/ReviewSection';
+import { useRecentlyViewed } from '../hooks/useRecentlyViewed';
 
 const ProductPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -16,6 +18,8 @@ const ProductPage: React.FC = () => {
   const [aiSuggestions, setAiSuggestions] = useState<any>(null);
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  const { addProduct, recentlyViewed } = useRecentlyViewed();
   
   const [activeImage, setActiveImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
@@ -144,6 +148,16 @@ const ProductPage: React.FC = () => {
         } catch (err) {
           console.warn("Could not fetch recommendations");
         }
+
+        // Add to recently viewed
+        addProduct({
+          id: data.id,
+          nameEn: data.nameEn,
+          nameAr: data.nameAr,
+          price: data.basePrice || data.price,
+          image: data.images?.[0]?.imageUrl || data.image || '',
+          slug: data.slug || data.id,
+        });
       } catch (err) {
         console.error(err);
       } finally {
@@ -497,18 +511,8 @@ const ProductPage: React.FC = () => {
                {activeTab === 'specs' && <div className="text-sm text-slate-500 font-medium p-4">{lang === 'ar' ? 'لا توجد مواصفات إضافية' : 'No additional specs'}</div>}
                {activeTab === 'shipping' && <div className="text-sm text-slate-500 font-medium p-4">{lang === 'ar' ? 'شحن سريع خلال 24 ساعة للطلبات المدفوعة مسبقاً.' : 'Fast shipping within 24h.'}</div>}
                {activeTab === 'reviews' && (
-                 <div className="space-y-6">
-                   <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
-                     <h3 className="font-black text-sm uppercase mb-4 flex items-center gap-2">
-                       {lang === 'ar' ? 'أضف تقييم' : 'Write a Review'}
-                       <span title="Protected by AI Fake Review Detection" className="flex items-center"><Sparkles size={16} className="text-secondary" /></span>
-                     </h3>
-                     <form onSubmit={handleReviewSubmit} className="flex gap-4">
-                       <input required value={reviewInput} onChange={e=>setReviewInput(e.target.value)} placeholder={lang === 'ar' ? 'اكتب تقييمك...' : 'Write your review...'} className="input-field flex-1" />
-                       <Button type="submit" disabled={reviewLoading}>{reviewLoading ? <Loader2 size={16} className="animate-spin" /> : (lang === 'ar' ? 'إرسال' : 'Submit')}</Button>
-                     </form>
-                   </div>
-                   <div className="text-sm text-slate-500 font-medium p-4">{lang === 'ar' ? 'لا توجد تقييمات بعد' : 'No reviews yet'}</div>
+                 <div className="p-2">
+                   <ReviewSection productId={product.id} />
                  </div>
                )}
              </div>
@@ -574,6 +578,41 @@ const ProductPage: React.FC = () => {
                     <Star size={10} className="text-yellow-400 fill-current" />
                     <span>{rec.rating || '0.0'}</span>
                   </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Recently Viewed */}
+      {recentlyViewed && recentlyViewed.length > 0 && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 mb-8">
+          <div className="flex items-center gap-2 mb-6">
+            <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
+              <RotateCcw size={16} />
+            </div>
+            <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">
+              {lang === 'ar' ? 'شاهدتها مؤخراً' : 'Recently Viewed'}
+            </h2>
+            <div className="flex-1 h-px bg-slate-200 ml-4"></div>
+          </div>
+          
+          <div className="flex overflow-x-auto gap-4 pb-4 snap-x">
+            {recentlyViewed.map((rec) => (
+              <Link to={`/product/${rec.slug}`} key={rec.id} className="min-w-[150px] md:min-w-[200px] bg-white rounded-2xl p-3 border border-slate-100 shadow-sm hover:shadow-md transition-all group snap-start">
+                <div className="aspect-square rounded-xl overflow-hidden bg-slate-50 mb-3 relative">
+                  <img 
+                    src={rec.image || 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&q=80&w=800'} 
+                    alt={rec.nameEn} 
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                </div>
+                <h3 className="text-xs font-bold text-slate-800 line-clamp-1 mb-1">
+                  {lang === 'ar' ? rec.nameAr : rec.nameEn}
+                </h3>
+                <div className="flex items-center justify-between">
+                  <span className="text-primary font-black text-sm">{rec.price} {lang === 'ar' ? 'ج.م' : 'EGP'}</span>
                 </div>
               </Link>
             ))}

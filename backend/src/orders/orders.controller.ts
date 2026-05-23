@@ -18,7 +18,7 @@ export class OrdersController {
     @Headers('x-session-id') sessionId: string,
     @Body() data: CreateOrderDto
   ) {
-    return this.orderService.createFromCart(req.user.id, sessionId, data.shippingAddress);
+    return this.orderService.createFromCart(req.user.id, sessionId, data.shippingAddress, data.pointsToRedeem);
   }
 
   @UseGuards(AuthGuard('jwt'))

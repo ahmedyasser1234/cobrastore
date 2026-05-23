@@ -13,6 +13,8 @@ const CustomerOverview: React.FC = () => {
   const [addresses, setAddresses] = useState<any[]>([]);
   const [wishlistCount, setWishlistCount] = useState(0);
   const [points, setPoints] = useState(0);
+  const [tier, setTier] = useState('bronze');
+  const [referralCode, setReferralCode] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,6 +31,8 @@ const CustomerOverview: React.FC = () => {
         setAddresses(addressesRes.data);
         setWishlistCount(wishlistRes.data.length);
         setPoints(profileRes.data.points || 0);
+        setTier(profileRes.data.tier || 'bronze');
+        setReferralCode(profileRes.data.referralCode || '');
       } catch (err) {
         console.error('Failed to load dashboard data', err);
       } finally {
@@ -39,7 +43,7 @@ const CustomerOverview: React.FC = () => {
   }, []);
 
   const recentOrders = orders.slice(0, 3);
-  const totalSpent = orders.reduce((sum, o) => sum + Number(o.totalAmount || 0), 0);
+  const totalSpent = orders.reduce((sum, o) => sum + Number(o.total || 0), 0);
 
   if (loading) {
     return (
@@ -60,9 +64,25 @@ const CustomerOverview: React.FC = () => {
             <h1 className="text-3xl font-black uppercase tracking-tighter italic">
               {user?.name || (lang === 'ar' ? 'عميل كوكرا' : 'Cobra Citizen')}
             </h1>
-            <p className="text-text-muted text-sm font-bold uppercase tracking-widest mt-1">
-              {lang === 'ar' ? 'النقاط:' : 'Points:'} <span className="text-primary">{points}</span>
-            </p>
+            <div className="flex items-center gap-4 mt-2">
+              <p className="text-text-muted text-sm font-bold uppercase tracking-widest">
+                {lang === 'ar' ? 'النقاط:' : 'Points:'} <span className="text-primary">{points}</span>
+              </p>
+              <div className="px-3 py-1 rounded-full bg-secondary/10 text-secondary text-xs font-black uppercase tracking-widest border border-secondary/20">
+                {tier}
+              </div>
+            </div>
+            {tier !== 'platinum' && (
+              <div className="mt-3 max-w-[200px]">
+                <div className="flex justify-between text-[10px] text-text-muted font-bold mb-1 uppercase">
+                  <span>{tier}</span>
+                  <span>{tier === 'bronze' ? 'silver' : tier === 'silver' ? 'gold' : 'platinum'}</span>
+                </div>
+                <div className="w-full h-1.5 bg-surface rounded-full overflow-hidden">
+                  <div className="h-full bg-secondary transition-all duration-1000" style={{ width: `${tier === 'bronze' ? Math.min((totalSpent/500)*100, 100) : tier === 'silver' ? Math.min(((totalSpent-500)/1500)*100, 100) : Math.min(((totalSpent-2000)/3000)*100, 100)}%` }} />
+                </div>
+              </div>
+            )}
           </div>
         </div>
         <div className="flex gap-4">
@@ -76,9 +96,21 @@ const CustomerOverview: React.FC = () => {
           </div>
           <div className="bg-surface border border-border px-6 py-3 rounded-2xl flex flex-col items-center">
             <span className="text-xs font-bold text-text-muted uppercase tracking-widest">
-              {lang === 'ar' ? 'عدد الطلبات' : 'Total Orders'}
+              {lang === 'ar' ? 'كود الإحالة' : 'Referral Code'}
             </span>
-            <span className="text-xl font-black text-green-500">{orders.length}</span>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="text-xl font-black text-green-500">{referralCode}</span>
+              <button 
+                onClick={() => {
+                  navigator.clipboard.writeText(referralCode);
+                  import('react-hot-toast').then(m => m.default.success(lang === 'ar' ? 'تم النسخ' : 'Copied!'));
+                }}
+                className="text-text-muted hover:text-primary transition-colors"
+                title={lang === 'ar' ? 'نسخ' : 'Copy'}
+              >
+                <Box size={14} />
+              </button>
+            </div>
           </div>
         </div>
       </div>
