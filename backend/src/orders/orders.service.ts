@@ -1,7 +1,8 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { Order, OrderStatus } from '../entities/order.entity';
+import { Vendor } from '../entities/vendor.entity';
 import { OrderItem } from '../entities/order-item.entity';
 import { OrderStatusLog } from '../entities/order-status-log.entity';
 import { CartService } from '../cart/cart.service';
@@ -41,7 +42,7 @@ export class OrderService {
     // Fetch vendors to get commission percentages
     const vendorIdsToFetch = Array.from(new Set(cart.items.map(item => item.product.vendorId).filter(Boolean)));
     const vendors = vendorIdsToFetch.length > 0 
-      ? await this.orderRepository.manager.findByIds('Vendor', vendorIdsToFetch) 
+      ? await this.orderRepository.manager.find(Vendor, { where: { id: In(vendorIdsToFetch) } }) 
       : [];
     const vendorMap = new Map<string, any>(vendors.map((v: any) => [v.id, v]));
 

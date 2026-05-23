@@ -17,5 +17,14 @@ services:
     ports:
       - "6379:6379"
 
+  rembg:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.rembg
+    container_name: elkoko_rembg
+    ports:
+      - "5001:5001"
+    restart: unless-stopped
+
 volumes:
   postgres_data:

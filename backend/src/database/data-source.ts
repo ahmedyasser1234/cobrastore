@@ -18,7 +18,9 @@ import { SystemSetting } from '../entities/system-setting.entity';
 import { Address } from '../entities/address.entity';
 import { Wishlist } from '../entities/wishlist.entity';
 import { Category } from '../entities/category.entity';
+import { SubCategory } from '../entities/sub-category.entity';
 import { ChatMessage } from '../entities/chat-message.entity';
+import { Ad } from '../entities/ad.entity';
 
 dotenv.config({ path: '../.env' });
 
@@ -29,29 +31,9 @@ export const dataSourceOptions: DataSourceOptions = {
   username: process.env.DB_USERNAME,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_DATABASE,
-  entities: [
-    User,
-    Vendor,
-    Department,
-    VendorCategory,
-    VendorCollection,
-    Product,
-    ProductVariation,
-    ProductImage,
-    Cart,
-    CartItem,
-    Order,
-    OrderItem,
-    OrderStatusLog,
-    VendorPayout,
-    SystemSetting,
-    Address,
-    Wishlist,
-    Category,
-    ChatMessage,
-  ],
+  entities: [__dirname + '/../**/*.entity{.ts,.js}'],
   migrations: ['dist/migrations/*.js'],
-  synchronize: true, // Set to true for initial setup to create tables automatically
+  synchronize: process.env.NODE_ENV !== 'production', // Set to false in production
 };
 
 const dataSource = new DataSource(dataSourceOptions);

@@ -25,9 +25,15 @@ import { UploadModule } from './upload/upload.module';
 
 import { VirtualTryonModule } from './virtual-tryon/virtual-tryon.module';
 import { AiModule } from './ai/ai.module';
+import { AdsModule } from './ads/ads.module';
+import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
+    ThrottlerModule.forRoot([{
+      ttl: 60000,
+      limit: 10,
+    }]),
     TypeOrmModule.forFeature([Product, Vendor]),
     ConfigModule.forRoot({
       isGlobal: true,
@@ -65,6 +71,7 @@ import { AiModule } from './ai/ai.module';
     UploadModule,
     VirtualTryonModule,
     AiModule,
+    AdsModule,
   ],
   controllers: [PublicController],
 

@@ -1,6 +1,9 @@
-import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
 import { AiChatbotService } from './chatbot/ai-chatbot.service';
 
+@UseGuards(AuthGuard('jwt'), ThrottlerGuard)
 @Controller('ai')
 export class AiController {
   constructor(private readonly chatbotService: AiChatbotService) {}

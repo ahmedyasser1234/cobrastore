@@ -5,6 +5,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { UserRole } from '../entities/user.entity';
 import { OrderStatus } from '../entities/order.entity';
+import { CreateOrderDto } from './dto/create-order.dto';
 
 @Controller('orders')
 export class OrdersController {
@@ -15,9 +16,9 @@ export class OrdersController {
   async create(
     @Req() req: any, 
     @Headers('x-session-id') sessionId: string,
-    @Body('shippingAddress') shippingAddress: any
+    @Body() data: CreateOrderDto
   ) {
-    return this.orderService.createFromCart(req.user.id, sessionId, shippingAddress);
+    return this.orderService.createFromCart(req.user.id, sessionId, data.shippingAddress);
   }
 
   @UseGuards(AuthGuard('jwt'))

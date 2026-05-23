@@ -11,7 +11,10 @@ async function bootstrap() {
   
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
   app.useGlobalFilters(new HttpExceptionFilter());
-  app.enableCors();
+  app.enableCors({
+    origin: [process.env.FRONTEND_URL, process.env.DASHBOARD_URL],
+    credentials: true,
+  });
   app.useStaticAssets(join(process.cwd(), 'uploads'), { prefix: '/uploads' });
 
   const config = new DocumentBuilder()
