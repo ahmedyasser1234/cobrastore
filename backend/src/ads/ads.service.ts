@@ -16,6 +16,10 @@ export class AdsService {
     return this.adsRepository.find();
   }
 
+  async findActive() {
+    return this.adsRepository.find({ where: { isActive: true } });
+  }
+
   async findOne(id: string) {
     const ad = await this.adsRepository.findOne({ where: { id } });
     if (!ad) throw new NotFoundException('Ad not found');

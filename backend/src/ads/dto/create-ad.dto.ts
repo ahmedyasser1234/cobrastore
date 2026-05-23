@@ -1,5 +1,4 @@
-import { IsString, IsUrl, IsEnum, IsOptional } from 'class-validator';
-import { AdStatus } from '../../entities/ad.entity';
+import { IsString, IsUrl, IsBoolean, IsOptional, IsDateString, IsUUID } from 'class-validator';
 
 export class CreateAdDto {
   @IsString()
@@ -11,9 +10,21 @@ export class CreateAdDto {
 
   @IsOptional()
   @IsUrl()
-  targetUrl?: string;
+  linkUrl?: string;
 
   @IsOptional()
-  @IsEnum(AdStatus)
-  status?: AdStatus;
+  @IsBoolean()
+  isActive?: boolean;
+
+  @IsOptional()
+  @IsUUID()
+  vendorId?: string;
+
+  @IsOptional()
+  @IsDateString()
+  startsAt?: string;
+
+  @IsOptional()
+  @IsDateString()
+  endsAt?: string;
 }

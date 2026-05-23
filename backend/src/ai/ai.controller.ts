@@ -9,6 +9,7 @@ export class AiController {
   constructor(private readonly chatbotService: AiChatbotService) {}
 
   @Post('chatbot')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @HttpCode(HttpStatus.OK)
   async handleChatbot(
     @Body('message') message: string,
