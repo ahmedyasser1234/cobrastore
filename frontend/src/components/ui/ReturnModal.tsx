@@ -59,17 +59,34 @@ const ReturnModal: React.FC<ReturnModalProps> = ({ order, isOpen, onClose, onSuc
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-[10px] font-extrabold uppercase tracking-widest text-text-muted">
-                {lang === 'ar' ? 'سبب الإرجاع' : 'Reason for return'}
-              </label>
-              <textarea
-                required
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                placeholder={lang === 'ar' ? 'يرجى توضيح سبب الإرجاع بالتفصيل...' : 'Please explain the reason for your return...'}
-                className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-primary transition-colors min-h-[120px] resize-none"
-              />
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-[10px] font-extrabold uppercase tracking-widest text-text-muted">
+                  {lang === 'ar' ? 'سبب الإرجاع الأساسي' : 'Primary Reason'}
+                </label>
+                <select
+                  required
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-primary transition-colors"
+                >
+                  <option value="">{lang === 'ar' ? 'اختر السبب...' : 'Select a reason...'}</option>
+                  <option value="defective">{lang === 'ar' ? 'منتج معيب / تالف' : 'Defective / Damaged'}</option>
+                  <option value="wrong item">{lang === 'ar' ? 'استلمت منتج خطأ' : 'Wrong item received'}</option>
+                  <option value="changed mind">{lang === 'ar' ? 'غيرت رأيي' : 'Changed my mind'}</option>
+                  <option value="other">{lang === 'ar' ? 'أخرى' : 'Other'}</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-extrabold uppercase tracking-widest text-text-muted">
+                  {lang === 'ar' ? 'تفاصيل إضافية (اختياري)' : 'Additional Details (Optional)'}
+                </label>
+                <textarea
+                  placeholder={lang === 'ar' ? 'يرجى توضيح سبب الإرجاع بالتفصيل...' : 'Please explain the reason for your return...'}
+                  className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-primary transition-colors min-h-[80px] resize-none"
+                />
+              </div>
             </div>
 
             <div className="bg-surface p-4 rounded-xl border border-border">

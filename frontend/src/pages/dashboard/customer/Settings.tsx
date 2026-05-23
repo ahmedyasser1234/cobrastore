@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Save, User, Mail, Loader2, Phone } from 'lucide-react';
+import { Save, User, Mail, Loader2, Phone, Copy, Gift } from 'lucide-react';
 import Button from '../../../components/ui/Button';
 import api from '../../../services/api';
 import { useTranslation } from '../../../hooks/useTranslation';
@@ -13,7 +13,8 @@ const CustomerSettings: React.FC = () => {
     name: '',
     email: '',
     phone: '',
-    password: ''
+    password: '',
+    referralCode: ''
   });
 
   useEffect(() => {
@@ -29,7 +30,8 @@ const CustomerSettings: React.FC = () => {
           name: res.data.name || '',
           email: res.data.email || '',
           phone: res.data.phone || '',
-          password: ''
+          password: '',
+          referralCode: res.data.id ? res.data.id.substring(0, 8).toUpperCase() : 'COBRA123'
         });
       }
     } catch (err: any) {
@@ -151,6 +153,43 @@ const CustomerSettings: React.FC = () => {
             </Button>
           </div>
         </form>
+      </div>
+
+      <div className="glass p-8 rounded-2xl max-w-2xl mx-auto mt-6">
+        <div className="flex items-start gap-4">
+          <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shrink-0">
+            <Gift size={24} />
+          </div>
+          <div className="flex-1">
+            <h2 className="text-xl font-black uppercase tracking-tighter text-glow-primary mb-2">
+              {lang === 'ar' ? 'برنامج الإحالة' : 'Referral Program'}
+            </h2>
+            <p className="text-sm font-bold text-text-muted mb-4">
+              {lang === 'ar' 
+                ? 'قم بدعوة أصدقائك واحصل على 50 نقطة لكل صديق يسجل ويقوم بأول طلب له!' 
+                : 'Invite your friends and get 50 points for each friend who registers and makes their first order!'}
+            </p>
+            <div className="flex gap-2">
+              <input 
+                type="text" 
+                readOnly
+                value={`${window.location.origin}/register?ref=${formData.referralCode}`}
+                className="input-field flex-1 font-mono text-xs bg-surface/50"
+              />
+              <Button 
+                onClick={() => {
+                  navigator.clipboard.writeText(`${window.location.origin}/register?ref=${formData.referralCode}`);
+                  toast.success(lang === 'ar' ? 'تم نسخ الرابط' : 'Link copied');
+                }}
+                variant="outline"
+                className="shrink-0 border-primary/20 text-primary hover:bg-primary/10"
+              >
+                <Copy size={16} className={lang === 'ar' ? 'ml-2' : 'mr-2'} />
+                {lang === 'ar' ? 'نسخ' : 'Copy'}
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

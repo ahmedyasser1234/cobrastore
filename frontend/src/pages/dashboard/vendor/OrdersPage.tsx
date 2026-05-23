@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Search, Loader2 } from 'lucide-react';
+import { Package, Search, Loader2, Download } from 'lucide-react';
 import Button from '../../../components/ui/Button';
 import api from '../../../services/api';
 import { useTranslation } from '../../../hooks/useTranslation';
@@ -59,6 +59,28 @@ const VendorOrdersPage: React.FC = () => {
         <h1 className="text-2xl font-black uppercase tracking-tighter text-glow-primary">
           {lang === 'ar' ? 'إدارة الطلبات' : 'Orders Management'}
         </h1>
+        <Button 
+          onClick={() => {
+            const headers = ['Order ID', 'Date', 'Status', 'Total (EGP)'];
+            const rows = orders.map(o => {
+              const vendorItems = o.items?.filter((i: any) => i.vendorId === vendorId) || [];
+              const subtotal = vendorItems.reduce((sum: number, item: any) => sum + (Number(item.unitPrice) * item.quantity), 0);
+              return `${o.id},${new Date(o.createdAt).toLocaleString()},${o.status},${subtotal}`;
+            });
+            const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows].join('\n');
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `orders_export_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+          }} 
+          className="h-10 px-4 text-xs uppercase font-black tracking-widest bg-slate-800 hover:bg-slate-700"
+        >
+          <Download size={16} className={lang === 'ar' ? 'ml-2' : 'mr-2'} />
+          {lang === 'ar' ? 'تصدير الطلبات CSV' : 'Export Orders CSV'}
+        </Button>
       </div>
 
       <div className="glass p-6 rounded-2xl">

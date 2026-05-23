@@ -43,6 +43,9 @@ const VendorProductsPage: React.FC = () => {
   const [descLoading, setDescLoading] = useState(false);
   const [catLoading, setCatLoading] = useState(false);
   const [translateLoading, setTranslateLoading] = useState(false);
+  const [priceLoading, setPriceLoading] = useState(false);
+  const [aiPrice, setAiPrice] = useState<number | null>(null);
+  const [aiPriceReasoning, setAiPriceReasoning] = useState<string>('');
 
   // Dynamic variants state
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
@@ -271,6 +274,31 @@ const VendorProductsPage: React.FC = () => {
       toast.error('Translation failed');
     } finally {
       setTranslateLoading(false);
+    }
+  };
+
+  const handleAiPriceSuggest = async () => {
+    if (!formData.nameEn && !formData.nameAr) {
+      toast.error(lang === 'ar' ? 'أدخل اسم المنتج أولاً' : 'Enter product name first');
+      return;
+    }
+    try {
+      setPriceLoading(true);
+      const res = await fetch(`${(import.meta as any).env.VITE_API_URL || 'http://localhost:3005'}/ai/price-suggest`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productName: formData.nameEn || formData.nameAr, categoryId: formData.categoryId })
+      });
+      const data = await res.json();
+      if (data.suggestedPrice) {
+        setAiPrice(data.suggestedPrice);
+        setAiPriceReasoning(data.reasoning || '');
+        toast.success(lang === 'ar' ? 'تم اقتراح السعر' : 'Price suggested');
+      }
+    } catch (err) {
+      toast.error(lang === 'ar' ? 'فشل اقتراح السعر' : 'Failed to suggest price');
+    } finally {
+      setPriceLoading(false);
     }
   };
 
@@ -563,8 +591,26 @@ const VendorProductsPage: React.FC = () => {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-widest text-text-muted mb-1">Base Price</label>
+                      <div className="flex justify-between items-center mb-1">
+                        <label className="block text-[10px] font-bold uppercase tracking-widest text-text-muted">Base Price</label>
+                        <button type="button" onClick={handleAiPriceSuggest} disabled={priceLoading} className="flex items-center gap-1 text-[10px] text-primary font-bold hover:underline">
+                          {priceLoading ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                          {lang === 'ar' ? 'اقتراح سعر بالذكاء الاصطناعي' : 'AI Price Suggestion'}
+                        </button>
+                      </div>
                       <input required type="number" step="0.01" value={formData.basePrice} onChange={e => setFormData({...formData, basePrice: e.target.value})} className="input-field" />
+                      
+                      {aiPrice !== null && (
+                        <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 mt-2">
+                          <p className="text-sm font-bold mb-1">
+                            {lang === 'ar' ? 'السعر المقترح:' : 'Suggested Price:'} <span className="text-primary">{aiPrice} {lang === 'ar' ? 'جنيه' : 'EGP'}</span>
+                          </p>
+                          <p className="text-[10px] text-text-muted font-bold leading-relaxed mb-2">{aiPriceReasoning}</p>
+                          <button type="button" onClick={() => { setFormData({...formData, basePrice: aiPrice.toString()}); setAiPrice(null); }} className="text-[10px] text-primary font-bold uppercase tracking-widest hover:underline">
+                            {lang === 'ar' ? 'تطبيق السعر' : 'Apply Price'}
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                   

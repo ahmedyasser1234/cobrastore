@@ -7,6 +7,9 @@ import { useAuthStore } from '../../store/useAuthStore';
 import LanguageToggle from '../ui/LanguageToggle';
 import Button from '../ui/Button';
 import NotificationBell from '../ui/NotificationBell';
+import { Camera, Scale } from 'lucide-react';
+import VisualSearchModal from '../ui/VisualSearchModal';
+import { useCompareStore } from '../../store/useCompareStore';
 
 interface NavbarProps {
   opaque?: boolean;
@@ -16,8 +19,10 @@ const Navbar: React.FC<NavbarProps> = ({ opaque }) => {
   const { t, lang } = useTranslation();
   const { items, openCartDrawer } = useCartStore();
   const { isAuthenticated, user: authUser } = useAuthStore();
+  const { items: compareItems } = useCompareStore();
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const [scrolled, setScrolled] = React.useState(false);
+  const [showVisualSearch, setShowVisualSearch] = React.useState(false);
   
   const isOpaque = scrolled || opaque;
 
@@ -81,6 +86,10 @@ const Navbar: React.FC<NavbarProps> = ({ opaque }) => {
           <div className="hidden md:flex items-center">
             <LanguageToggle />
           </div>
+
+          <button onClick={() => setShowVisualSearch(true)} className={`p-2.5 rounded-2xl hover:bg-primary/10 transition-colors hidden md:block ${iconColor}`}>
+            <Camera size={20} />
+          </button>
 
           <div className={`h-4 w-[1px] hidden md:block transition-colors duration-500 ${isOpaque ? 'bg-slate-200' : 'bg-white/30'}`} />
 
@@ -151,6 +160,21 @@ const Navbar: React.FC<NavbarProps> = ({ opaque }) => {
           </div>
         </div>
       )}
+
+      {/* Floating Compare Bar */}
+      {compareItems.length > 0 && (
+        <div className="absolute top-[72px] left-0 right-0 bg-secondary text-white py-2 px-6 flex justify-between items-center z-40 shadow-glow-primary animate-in slide-in-from-top-2">
+          <div className="flex items-center gap-2">
+            <Scale size={16} />
+            <span className="text-xs font-bold uppercase tracking-widest">{lang === 'ar' ? `مقارنة (${compareItems.length}) منتجات` : `Compare (${compareItems.length}) items`}</span>
+          </div>
+          <Link to="/compare" className="text-xs bg-white text-secondary px-4 py-1.5 rounded-full font-black uppercase tracking-widest hover:bg-slate-100 transition-colors">
+            {lang === 'ar' ? 'عرض المقارنة' : 'View Compare'}
+          </Link>
+        </div>
+      )}
+
+      <VisualSearchModal isOpen={showVisualSearch} onClose={() => setShowVisualSearch(false)} />
     </nav>
   );
 };

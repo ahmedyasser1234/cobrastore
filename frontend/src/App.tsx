@@ -7,6 +7,7 @@ import ShopPage from './pages/ShopPage';
 import ProductPage from './pages/ProductPage';
 import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
+import ComparePage from './pages/ComparePage';
 import SuccessPage from './pages/SuccessPage';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
@@ -51,6 +52,7 @@ import CustomerOrders from './pages/dashboard/customer/Orders';
 import CustomerSettings from './pages/dashboard/customer/Settings';
 import CustomerAddresses from './pages/dashboard/customer/Addresses';
 import CustomerWishlist from './pages/dashboard/customer/Wishlist';
+import OrderTrackingPage from './pages/OrderTrackingPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 
 const PageNotFound = () => <div className="min-h-screen flex items-center justify-center text-text-main font-extrabold text-4xl uppercase tracking-tight">404 - Cobra Access Denied</div>;
@@ -89,6 +91,7 @@ function App() {
         {/* Public Store Routes */}
         <Route path="/" element={<HomePage />} />
         <Route path="/shop" element={<ShopPage />} />
+        <Route path="/compare" element={<ComparePage />} />
         <Route path="/departments" element={<DepartmentsPage />} />
         <Route path="/vendors" element={<VendorsPagePublic />} />
         <Route path="/vendors/:slug" element={<VendorDetailPage />} />
@@ -156,6 +159,7 @@ function App() {
             <Route path="addresses" element={<CustomerAddresses />} />
             <Route path="wishlist" element={<CustomerWishlist />} />
           </Route>
+          <Route path="/orders/:orderId/tracking" element={<OrderTrackingPage />} />
         </Route>
 
         <Route path="*" element={<PageNotFound />} />

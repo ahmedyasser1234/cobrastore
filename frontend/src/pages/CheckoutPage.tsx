@@ -135,6 +135,39 @@ const CheckoutPage: React.FC = () => {
                     <input type="text" placeholder="12345" className="input-field" />
                   </div>
                 </form>
+                
+                {/* Loyalty Points Section */}
+                {pointsBalance > 0 && (
+                  <div className="bg-primary/5 border border-primary/20 rounded-2xl p-6 mt-8">
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="text-sm font-black uppercase tracking-widest">
+                        {lang === 'ar' ? 'نقاطك' : 'Your Points'}: <span className="text-primary">{pointsBalance}</span>
+                      </span>
+                      <span className="text-xs text-text-muted">
+                        {lang === 'ar' ? '100 نقطة = 5 جنيه' : '100 pts = EGP 5'}
+                      </span>
+                    </div>
+                    <div className="flex gap-3">
+                      <input 
+                        type="number" 
+                        max={pointsBalance} 
+                        min={0}
+                        value={pointsToRedeem}
+                        onChange={(e) => setPointsToRedeem(Math.min(pointsBalance, Math.max(0, parseInt(e.target.value) || 0)))}
+                        className="input-field flex-1" 
+                        placeholder={lang === 'ar' ? 'عدد النقاط' : 'Points to use'} 
+                      />
+                      <Button onClick={(e) => { e.preventDefault(); }}>
+                        {lang === 'ar' ? 'استرداد' : 'Redeem'}
+                      </Button>
+                    </div>
+                    {pointsDiscount > 0 && (
+                      <p className="text-xs text-primary font-bold mt-2">
+                        ✓ {lang === 'ar' ? `خصم ${pointsDiscount} جنيه` : `EGP ${pointsDiscount} discount applied`}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
@@ -278,27 +311,7 @@ const CheckoutPage: React.FC = () => {
                 )}
               </div>
 
-              {/* Loyalty Points Section */}
-              {pointsBalance > 0 && (
-                <div className="bg-primary/5 p-4 border border-primary/20 rounded-2xl mb-8">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-xs font-bold text-primary uppercase tracking-widest">{lang === 'ar' ? 'نقاطك المتاحة' : 'Available Points'}</span>
-                    <span className="text-sm font-black text-primary">{pointsBalance}</span>
-                  </div>
-                  <div className="flex gap-2 items-center">
-                    <input 
-                      type="number" 
-                      max={pointsBalance} 
-                      min={0}
-                      value={pointsToRedeem}
-                      onChange={(e) => setPointsToRedeem(Math.min(pointsBalance, Math.max(0, parseInt(e.target.value) || 0)))}
-                      className="w-full bg-white border border-primary/30 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:border-primary text-center"
-                      placeholder="0"
-                    />
-                    <Button onClick={() => setPointsToRedeem(pointsBalance)} size="sm" variant="outline" className="text-[10px] px-2 py-2">MAX</Button>
-                  </div>
-                </div>
-              )}
+
 
               <div className="flex justify-between items-center mb-10">
                 <span className="text-lg font-extrabold uppercase tracking-tighter text-text-muted">Total</span>

@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { 
   ShoppingBag, Search, Filter, Loader2, 
   ArrowUpRight, Eye, CheckCircle, XCircle, 
-  Clock, Package, Truck, CreditCard, ChevronRight
+  Clock, Package, Truck, CreditCard, ChevronRight, Download
 } from 'lucide-react';
+import Button from '../../../components/ui/Button';
 import api from '../../../services/api';
 import toast from 'react-hot-toast';
 import { useTranslation } from '../../../hooks/useTranslation';
@@ -60,6 +61,27 @@ const OrdersPage: React.FC = () => {
             className={`bg-transparent outline-none text-xs w-full font-bold ${lang === 'ar' ? 'text-right' : 'text-left'}`} 
           />
         </div>
+        <Button 
+          onClick={() => {
+            const headers = ['Order ID', 'Customer', 'Date', 'Status', 'Total (EGP)'];
+            const rows = orders.map(o => {
+              const customerName = o.user?.name || o.customer?.name || 'Guest';
+              return `${o.id},"${customerName}",${new Date(o.createdAt).toLocaleString()},${o.status},${o.total}`;
+            });
+            const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows].join('\n');
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `admin_orders_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+          }} 
+          className="h-10 px-4 text-xs uppercase font-black tracking-widest bg-slate-800 hover:bg-slate-700 w-full md:w-auto"
+        >
+          <Download size={16} className={lang === 'ar' ? 'ml-2' : 'mr-2'} />
+          {lang === 'ar' ? 'تصدير الطلبات CSV' : 'Export Orders CSV'}
+        </Button>
       </div>
 
       {loading ? (

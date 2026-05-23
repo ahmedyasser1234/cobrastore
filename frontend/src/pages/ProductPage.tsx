@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 import Button from '../components/ui/Button';
 import VirtualTryOnModal from '../components/ui/VirtualTryOnModal';
 import Navbar from '../components/layout/Navbar';
-import ReviewSection from '../components/ReviewSection';
+import ReviewSection from '../components/ui/ReviewSection';
 import { useRecentlyViewed } from '../hooks/useRecentlyViewed';
 
 const ProductPage: React.FC = () => {

@@ -8,40 +8,34 @@ export interface CompareProduct {
   price: number;
   image: string;
   category: string;
-  rating: number;
+  slug: string;
+  attributes?: Record<string, any>;
+  rating?: number;
 }
 
-interface CompareStore {
+interface CompareState {
   items: CompareProduct[];
   addItem: (product: CompareProduct) => void;
   removeItem: (id: string) => void;
   clearItems: () => void;
-  isCompareOpen: boolean;
-  setCompareOpen: (isOpen: boolean) => void;
 }
 
-export const useCompareStore = create<CompareStore>()(
+export const useCompareStore = create<CompareState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       items: [],
-      isCompareOpen: false,
-      addItem: (product) => {
-        const items = get().items;
-        if (items.length >= 4) {
-          // Keep max 4
-          return;
-        }
-        if (!items.find(i => i.id === product.id)) {
-          set({ items: [...items, product] });
-        }
-      },
-      removeItem: (id) => set((state) => ({ items: state.items.filter(i => i.id !== id) })),
-      clearItems: () => set({ items: [] }),
-      setCompareOpen: (isOpen) => set({ isCompareOpen: isOpen }),
+      addItem: (product) => set((state) => {
+        if (state.items.find(i => i.id === product.id)) return state;
+        if (state.items.length >= 4) return { items: [...state.items.slice(1), product] }; // max 4 items
+        return { items: [...state.items, product] };
+      }),
+      removeItem: (id) => set((state) => ({
+        items: state.items.filter(item => item.id !== id)
+      })),
+      clearItems: () => set({ items: [] })
     }),
     {
-      name: 'cobra-compare-storage',
-      partialize: (state) => ({ items: state.items }), // Only persist items
+      name: 'cobra-compare-storage'
     }
   )
 );

@@ -83,9 +83,8 @@ const CompareModal: React.FC = () => {
                       <button 
                         onClick={() => {
                           addToCart({
-                            id: item.id,
-                            nameEn: item.nameEn,
-                            nameAr: item.nameAr,
+                            productId: item.id,
+                            name: lang === 'ar' ? item.nameAr : item.nameEn,
                             price: item.price,
                             image: item.image,
                             quantity: 1

@@ -68,19 +68,23 @@ const CustomerOverview: React.FC = () => {
               <p className="text-text-muted text-sm font-bold uppercase tracking-widest">
                 {lang === 'ar' ? 'النقاط:' : 'Points:'} <span className="text-primary">{points}</span>
               </p>
-              <div className="px-3 py-1 rounded-full bg-secondary/10 text-secondary text-xs font-black uppercase tracking-widest border border-secondary/20">
-                {tier}
+              <div className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest border ${
+                tier === 'bronze' ? 'bg-amber-100 text-amber-800 border-amber-200' :
+                tier === 'silver' ? 'bg-slate-100 text-slate-600 border-slate-200' :
+                tier === 'gold' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' :
+                'bg-primary/10 text-primary border-primary/20'
+              }`}>
+                {tier === 'bronze' ? 'Bronze ★' : tier === 'silver' ? 'Silver ★★' : tier === 'gold' ? 'Gold ★★★' : 'Platinum ★★★★'}
               </div>
             </div>
             {tier !== 'platinum' && (
               <div className="mt-3 max-w-[200px]">
-                <div className="flex justify-between text-[10px] text-text-muted font-bold mb-1 uppercase">
-                  <span>{tier}</span>
-                  <span>{tier === 'bronze' ? 'silver' : tier === 'silver' ? 'gold' : 'platinum'}</span>
+                <div className="w-full h-1.5 bg-surface rounded-full overflow-hidden mb-1">
+                  <div className="h-full bg-primary shadow-glow-primary transition-all duration-1000" style={{ width: `${tier === 'bronze' ? Math.min((totalSpent/500)*100, 100) : tier === 'silver' ? Math.min(((totalSpent-500)/1500)*100, 100) : Math.min(((totalSpent-2000)/3000)*100, 100)}%` }} />
                 </div>
-                <div className="w-full h-1.5 bg-surface rounded-full overflow-hidden">
-                  <div className="h-full bg-secondary transition-all duration-1000" style={{ width: `${tier === 'bronze' ? Math.min((totalSpent/500)*100, 100) : tier === 'silver' ? Math.min(((totalSpent-500)/1500)*100, 100) : Math.min(((totalSpent-2000)/3000)*100, 100)}%` }} />
-                </div>
+                <p className="text-[10px] text-text-muted font-bold uppercase tracking-widest">
+                  {lang === 'ar' ? `يتبقى ${tier === 'bronze' ? 500 - totalSpent : tier === 'silver' ? 1500 - totalSpent : 3000 - totalSpent} نقطة لـ ${tier === 'bronze' ? 'silver' : tier === 'silver' ? 'gold' : 'platinum'}` : `${tier === 'bronze' ? 500 - totalSpent : tier === 'silver' ? 1500 - totalSpent : 3000 - totalSpent} pts to ${tier === 'bronze' ? 'silver' : tier === 'silver' ? 'gold' : 'platinum'}`}
+                </p>
               </div>
             )}
           </div>

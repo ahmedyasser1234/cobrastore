@@ -3,6 +3,7 @@ import { Package, Search, Loader2 } from 'lucide-react';
 import api from '../../../services/api';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { toast } from 'react-hot-toast';
+import { Link } from 'react-router-dom';
 import OrderTrackingModal from '../../../components/ui/OrderTrackingModal';
 import ReturnModal from '../../../components/ui/ReturnModal';
 
@@ -102,12 +103,12 @@ const CustomerOrders: React.FC = () => {
                     </td>
                     <td className="py-4 px-4">
                       <div className="flex justify-center items-center gap-2">
-                        <button 
-                          onClick={() => { setSelectedOrder(order); setTrackingModalOpen(true); }}
+                        <Link 
+                          to={`/orders/${order.id}/tracking`}
                           className="bg-primary/10 text-primary hover:bg-primary/20 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors"
                         >
                           {lang === 'ar' ? 'تتبع' : 'Track'}
-                        </button>
+                        </Link>
                         {order.status === 'delivered' && (
                           <button 
                             onClick={() => { setSelectedOrder(order); setReturnModalOpen(true); }}

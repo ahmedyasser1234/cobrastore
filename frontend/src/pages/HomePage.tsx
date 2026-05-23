@@ -12,6 +12,8 @@ import Button from '../components/ui/Button';
 import ProductCard from '../components/ui/ProductCard';
 import WavyDivider from '../components/ui/WavyDivider';
 import api from '../services/api';
+import { useRecentlyViewed } from '../hooks/useRecentlyViewed';
+import { useAuthStore } from '../store/useAuthStore';
 
 const HomePage: React.FC = () => {
   const { t, lang, dir } = useTranslation();
@@ -22,6 +24,17 @@ const HomePage: React.FC = () => {
   const [vendorPage, setVendorPage] = React.useState(0);
   const [categories, setCategories] = React.useState<any[]>([]);
   const [stats, setStats] = React.useState({ products: '50K+', vendors: '1.2K', rating: '4.9★' });
+  const { recentlyViewed } = useRecentlyViewed();
+  const { isAuthenticated } = useAuthStore();
+  const [aiRecommendations, setAiRecommendations] = React.useState<any[]>([]);
+
+  React.useEffect(() => {
+    if (isAuthenticated) {
+      api.get('/ai/recommendations')
+        .then(res => setAiRecommendations(res.data.products || res.data || []))
+        .catch(() => {});
+    }
+  }, [isAuthenticated]);
 
   React.useEffect(() => {
     const fetchData = async () => {
@@ -224,6 +237,42 @@ const HomePage: React.FC = () => {
             </div>
           </div>
         </section>
+
+        {/* 🤖 AI RECOMMENDATIONS SECTION */}
+        {aiRecommendations.length > 0 && (
+          <section className="py-20 relative bg-primary/5 border-t border-primary/10">
+            <div className="max-w-7xl mx-auto px-8 lg:px-16">
+              <div className="flex items-center gap-4 mb-12">
+                <div className="w-12 h-12 rounded-2xl bg-white border border-primary/20 flex items-center justify-center text-primary shadow-glow-primary">
+                  <Sparkles size={24} />
+                </div>
+                <div>
+                  <h2 className="text-3xl md:text-4xl font-normal heading-gradient uppercase">
+                    {lang === 'ar' ? 'مقترح لك خصيصاً' : 'Recommended For You'}
+                  </h2>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-primary mt-1">
+                    {lang === 'ar' ? 'بناءً على نشاطك بالذكاء الاصطناعي' : 'Based on your activity via AI'}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+                {aiRecommendations.map((product) => (
+                  <ProductCard key={product.id} product={{
+                    id: product.id,
+                    name: lang === 'ar' ? product.nameAr : product.nameEn,
+                    price: Number(product.basePrice || product.price),
+                    image: product.images?.[0]?.imageUrl || product.image || 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?q=80&w=400',
+                    rating: Number(product.rating ?? 5.0),
+                    category: lang === 'ar' ? (product.category?.nameAr || product.department?.nameAr || 'قسم') : (product.category?.nameEn || product.department?.nameEn || 'Category'),
+                    slug: product.slug || product.id,
+                    discount: product.discount
+                  }} />
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* 🔥 BEST SELLERS SECTION */}
         <section className="py-40 relative bg-slate-950">
@@ -445,6 +494,39 @@ const HomePage: React.FC = () => {
             ))}
           </div>
         </section>
+
+        {/* 👁️ RECENTLY VIEWED (If any) */}
+        {recentlyViewed && recentlyViewed.length > 0 && (
+          <section className="py-20 relative bg-slate-50 border-t border-slate-200">
+            <div className="max-w-7xl mx-auto px-8 lg:px-16">
+              <div className="flex items-center gap-3 mb-10">
+                <div className="w-10 h-10 rounded-xl bg-slate-200 flex items-center justify-center text-slate-600">
+                  <Laptop size={20} />
+                </div>
+                <h3 className="text-2xl font-black uppercase tracking-tight text-slate-800">
+                  {lang === 'ar' ? 'شاهدتها مؤخراً' : 'Recently Viewed'}
+                </h3>
+              </div>
+              
+              <div className="flex gap-6 overflow-x-auto pb-8 custom-scrollbar scroll-smooth snap-x">
+                {recentlyViewed.map((product: any) => (
+                  <div key={product.id} className="min-w-[280px] max-w-[280px] snap-start">
+                    <ProductCard product={{
+                      id: product.id,
+                      name: lang === 'ar' ? product.nameAr : product.nameEn,
+                      price: product.price,
+                      image: product.image,
+                      rating: 5,
+                      category: lang === 'ar' ? 'سجل المشاهدة' : 'History',
+                      slug: product.id,
+                      discount: product.discount
+                    }} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
       </div>
     </Layout>
   );
